@@ -1,173 +1,125 @@
 ﻿# deep-claude-codex
 
-> Windows 一键搭建：Claude Code + DeepSeek + Codex，面向中国用户的开源整合方案。
+> Windows 一键搭建：Codex Desktop + Claude Code + DeepSeek，中国用户的开源 AI 编程方案。
 
-[English](#english) | [中文](#chinese)
+[中文](#chinese) | [English](#english)
 
 ---
 
 <a name="chinese"></a>
-## 🇨🇳 中文
+## 中文
 
-### 这是什么？
+### 两套方案
 
-`deep-claude-codex` 让你在 Windows 上一键拥有 AI 编程三件套：
+本项目提供两种方式在 Windows 上使用 DeepSeek 驱动 AI 编程：
 
-```
-┌──────────────────────────────────────────┐
-│            deep-claude-codex             │
-│                                          │
-│  Claude Code CLI ──  AI 编程代理层       │
-│       │ (文件读写 / Shell / Git / 子代理) │
-│       ▼                                  │
-│  DeepSeek V4 ──────── 模型推理层          │
-│       │ (deepseek-v4-pro / v4-flash)     │
-│       ▼                                  │
-│  你的代码仓库 ──────── 实际干活的地方       │
-└──────────────────────────────────────────┘
-```
+`
+方案 A: Codex Desktop  codex-relay  DeepSeek (推荐日常使用)
+方案 B: Codex 终端  Claude Code CLI  DeepSeek (编程/自动化)
+`
 
-**核心思路**：Claude Code 是公认最好的 AI 编程 CLI 工具，但 Anthropic API 对国内用户太贵。DeepSeek 提供了 Anthropic 兼容接口，我们把 Claude Code 的底座换成 DeepSeek，用十分之一的价格享受同样的编码体验。
+| | 方案 A: codex-relay | 方案 B: Claude Code CLI |
+|---|---|---|
+| 桥接方式 | 本地代理 (127.0.0.1:4000) | 环境变量 |
+| 启动要求 | 先启 relay  再开 Codex | 直接运行 bat |
+| 适用场景 | Codex Desktop 原生体验 | 终端编程 + Git 自动化 |
+| 协议转换 | relay 自动转换 DeepSeek  OpenAI | Anthropic 兼容接口直连 |
 
-### 两个目的
+---
 
-| # | 目的 | 说明 |
-|---|------|------|
-| 1 | **省钱** | DeepSeek API 价格约为 Claude 的 1/10，token 成本大幅降低 |
-| 2 | **复用 Claude Code 工具链** | Claude Code 的文件编辑、Shell、Git、子代理等全部保留，只是推理模型换成 DeepSeek |
+### 方案 A：Codex Desktop + codex-relay（推荐）
 
-### 三步安装
+通过本地代理把 Codex Desktop 的 OpenAI 协议请求转成 DeepSeek 格式。
 
-```bat
-:: 1. 克隆仓库
-git clone https://github.com/YOUR_USERNAME/deep-claude-codex.git
-cd deep-claude-codex
+`
+Codex Desktop  127.0.0.1:4000  codex-relay  api.deepseek.com
+`
 
-:: 2. 运行一键安装
+#### 安装步骤
+
+\\\ash
+# 1. 安装 codex-relay
+pip install codex-relay
+
+# 2. 复制配置文件
+copy relay\config.toml %USERPROFILE%\.codex\config.toml
+copy relay\auth.json %USERPROFILE%\.codex\auth.json
+
+# 3. 编辑 relay\start-relay.bat，填入你的 DeepSeek API key
+
+# 4. 启动 relay
+relay\start-relay.bat
+
+# 5. 打开 Codex Desktop
+\\\
+
+> 必须先启动 relay，再打开 Codex。详细文档见 [docs/codex-relay-bridge.md](docs/codex-relay-bridge.md)
+
+#### 开机自启
+
+将 elay\start-relay.bat 快捷方式放入：
+\\\
+%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\
+\\\
+
+---
+
+### 方案 B：Codex 终端 + Claude Code CLI
+
+Codex 终端直接调用 Claude Code，底座指向 DeepSeek。Codex 维护项目长期上下文，Claude Code 负责单次编码任务。
+
+#### 安装步骤
+
+\\\at
+:: 1. 运行一键安装
 setup.bat
 
-:: 3. 启动
-deepclaude.bat
-```
+:: 2. 将 .env.example 复制为 .env，填入 key
+copy .env.example .env
 
-`setup.bat` 会自动：
-1. 检测 Node.js 环境
-2. 网络不通自动切淘宝 npm 镜像
-3. 安装 Claude Code CLI
-4. 让你输入 DeepSeek API key → 自动生成 `deepclaude.bat`
+:: 3. 在 Codex 终端中调用
+claude-run.bat "你的编程任务"
+\\\
 
-> **获取 DeepSeek API key**：[platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys)
+#### Codex 终端调用方式
 
+\\\powershell
+# 方式 1：通过 claude-run.bat
+& "path\to\claude-run.bat" "给 main.py 添加搜索接口"
 
-### 💻 Windows 11 + Codex 调用 DeepSeek 完整方法
-
-> 以下是在 Codex 终端里直接调用 DeepSeek 底座 Claude Code 的实操步骤。
-
-#### 前置准备
-
-1. 运行 `setup.bat` 完成一键安装
-2. 将 `.env.example` 复制为 `.env`，填入你的 DeepSeek API key：
-   ```
-   DEEPSEEK_API_KEY=sk-你的key
-   ```
-
-#### 方法一：通过 claude-run.bat（推荐）
-
-Codex 终端中执行：
-
-```powershell
-# 单次调用，Codex 自动拼好上下文
-& "C:\Users\你的用户名\...\deep-claude-codex\claude-run.bat" "给 main.py 加搜索接口"
-```
-
-#### 方法二：直接设环境变量调用
-
-```powershell
+# 方式 2：直接设环境变量
 $env:ANTHROPIC_BASE_URL = "https://api.deepseek.com/anthropic"
 $env:ANTHROPIC_AUTH_TOKEN = "sk-你的key"
-$env:ANTHROPIC_DEFAULT_SONNET_MODEL = "deepseek-v4-pro"
-$env:ANTHROPIC_DEFAULT_HAIKU_MODEL = "deepseek-v4-flash"
+claude -p "你的任务"
+\\\
 
-claude -p "你的编程任务"
-```
+#### 完整工作流
 
-#### 完整工作流演示
+\\\
+你：「给 demo-app 加用户注册接口」
+      
+Codex 读项目上下文  拼好 prompt
+      
+Codex 执行：claude-run.bat "在 main.py 中添加 POST /register..."
+      
+Claude Code (DeepSeek V4)  读代码  写代码  返回
+      
+Codex 审查 git diff  git commit
+      
+下次继续，Codex 记得全部历史
+\\\
 
-```
-你在 Codex 里说：「给 demo-app 加个用户注册接口」
-           │
-           ▼
-Codex 读项目上下文 → 拼好 prompt
-           │
-           ▼
-Codex 执行：claude-run.bat "在 main.py 中添加 POST /register 接口..."
-           │
-           ▼
-Claude Code (DeepSeek V4) → 读代码 → 写代码 → 返回结果
-           │
-           ▼
-Codex 审查 git diff → git commit
-           │
-           ▼
-下次你继续说，Codex 还记得全部历史
-```
-
-#### 网络说明
-
-| 服务 | 需要 VPN？ | 说明 |
-|------|:---:|------|
-| `api.deepseek.com` | ❌ | 国产服务，国内直连 |
-| npm 装 Claude Code | ❌ | setup.bat 自动切淘宝镜像 |
-| `github.com` | ⚠️ | 视网络情况，可能需要 |
-### 方式一：独立窗口（推荐新手）
-
-双击 `deepclaude.bat`，弹出 CMD 窗口，直接和 Claude Code 对话编程。
-
-#### 方式二：通过 Codex 调用（推荐进阶）
-
-1. 将 `.env.example` 复制为 `.env`，填入你的 DeepSeek API key
-2. 在 Codex 终端里，AI 助手直接帮你调 Claude Code：
-
-```
-你说：「给 main.py 加个搜索接口」
-      ↓
-Codex 自动调用：claude-run.bat "给 main.py 加搜索接口"
-      ↓
-Claude Code 读代码 → 写代码 → 返回结果
-      ↓
-Codex 审查 diff → git commit
-      ↓
-下次继续，Codex 维护全部上下文
-```
-
-`claude-run.bat` 是非交互模式脚本，专为 Codex/AI 助手调用设计：
-- 从 `.env` 读取 API key（安全，不会被提交到 git）
-- 调用 `claude -p` 单次执行并返回
-- 适合 Codex 作为长期记忆 + 调度中心
-
-#### 方式一：独立窗口（推荐新手）
-
-双击 `deepclaude.bat`，弹出 CMD 窗口，直接和 Claude Code 对话编程。
-
-#### 方式二：通过 Codex 调用（推荐进阶）
-
-在 Codex 终端里，AI 助手直接帮你调 Claude Code：
-
-```
-你说：「给 main.py 加个搜索接口」
-      ↓
-Codex 自动调用：claude -p "给 main.py 加搜索接口"
-      ↓
-Codex 审查结果 → git commit
-      ↓
-下次继续，上下文不丢
-```
+---
 
 ### 网络说明
 
-- **DeepSeek API (`api.deepseek.com`)**：国产服务，国内直连，**不需要 VPN**
-- **npm 安装 Claude Code**：如果卡住，`setup.bat` 会自动切换到淘宝镜像 (`registry.npmmirror.com`)
-- **全程零 VPN** 可用
+| 服务 | 需要 VPN？ | 说明 |
+|------|:---:|------|
+| api.deepseek.com | X | 国产服务，国内直连 |
+| npm 装 Claude Code | X | setup.bat 自动切淘宝镜像 |
+| github.com | /!\ | 视网络情况 |
+
+---
 
 ### 省钱对比
 
@@ -175,109 +127,87 @@ Codex 审查结果 → git commit
 |---|---|---|
 | 输入 1M tokens | ~$3 | ~$0.27 |
 | 输出 1M tokens | ~$15 | ~$1.10 |
-| 一个中等项目 (约 500K tokens) | ~$5-8 | ~$0.5-1 |
+| 中等项目 (~500K) | ~$5-8 | ~$0.5-1 |
 
-> 价格参考 2025 年公开定价，实际以官网为准。
+---
 
 ### 前置要求
 
 - Windows 10/11
-- Node.js >= 18（[nodejs.org](https://nodejs.org/)）
-- DeepSeek API key（[免费注册](https://platform.deepseek.com/)）
-- Git（可选，用于版本管理）
-- GitHub Desktop（可选，可视化 Git）
+- Node.js >= 18 ([nodejs.org](https://nodejs.org/))
+- DeepSeek API key ([免费注册](https://platform.deepseek.com/))
+- Git + GitHub Desktop（可选）
+- Python (方案 A 需要，用于 pip install codex-relay)
+
+---
+
+### 项目结构
+
+\\\
+deep-claude-codex/
+  setup.bat             一键安装脚本
+  deepclaude.bat        交互式启动 (方案B)
+  claude-run.bat        非交互脚本 (方案B, Codex调用)
+  .env.example          API key 配置模板
+  relay/
+    config.toml         Codex Desktop 配置 (方案A)
+    auth.json           认证配置 (方案A)
+    start-relay.bat     启动 relay (方案A)
+  docs/
+    codex-relay-bridge.md  方案A 详细文档
+  README.md
+  .gitignore
+  LICENSE (MIT)
+\\\
+
+---
 
 ### FAQ
 
 **Q: 需要 VPN 吗？**
-A: 不需要。DeepSeek 是国产服务，`setup.bat` 遇到 npm 不通会自动切国内镜像。
+A: 不需要。DeepSeek 国产服务直连，npm 不通自动切国内镜像。
 
-**Q: 和直接用 Claude Code 有什么区别？**
-A: 界面、工具、操作方式完全一样。唯一的区别是背后的模型从 Claude 换成了 DeepSeek，价格降 90%。
+**Q: 方案 A 和 B 选哪个？**
+A: 日常对话用方案 A (Codex Desktop + relay)，写代码用方案 B (Claude Code CLI)。两者都用 DeepSeek，底层一样。
 
-**Q: 支持哪些 DeepSeek 模型？**
-A: 默认主模型 `deepseek-v4-pro`，子代理用 `deepseek-v4-flash`。可以改 `deepclaude.bat` 切换。
-
-**Q: Codex 是什么？**
-A: Codex 是 OpenAI 的桌面 AI 编程助手，可以在终端里持续管理项目上下文、自动调 Claude Code 写代码、做 Git 管理。
-
-**Q: deepclaude.bat 开机自启后如何使用？**
-A: 不需要自启。需要编程时双击打开，Codex 方案则是随时在 Codex 界面里调用。
-
-### 项目结构
-
-```
-deep-claude-codex/
-├── setup.bat          # 一键安装脚本
-├── deepclaude.bat     # 交互式启动脚本 (由 setup.bat 生成, 含你的 key)
-├── claude-run.bat     # 非交互脚本 (供 Codex 调用, 从 .env 读取 key)
-├── .env.example       # API key 配置模板
-├── README.md          # 本文件
-├── .gitignore         # 忽略 .env 等敏感文件
-└── LICENSE            # MIT
-```
-
-```
-deep-claude-codex/
-├── setup.bat          # 一键安装脚本
-├── deepclaude.bat     # 启动脚本 (由 setup.bat 生成, 含你的 key)
-├── README.md          # 本文件
-├── .gitignore         # 忽略敏感文件
-└── LICENSE            # MIT
-```
+**Q: codex-relay 做什么？**
+A: 它把 Codex Desktop 发的 OpenAI 格式请求转成 DeepSeek 格式，再把响应转回来。相当于一个本地翻译层。
 
 ---
 
 <a name="english"></a>
-## 🇬🇧 English
+## English
 
-### What is this?
+### Two Approaches
 
-`deep-claude-codex` provides a one-click setup for AI-powered coding on Windows, combining Claude Code's toolchain with DeepSeek's affordable models — designed for developers in China and beyond.
-
-### Architecture
-
-```
-Claude Code CLI (agent/tool layer)
-    ↓ Anthropic-compatible API
-DeepSeek V4 (model/inference layer)
-    ↓
-Your code repository
-```
-
-### Why?
-
-Claude Code is arguably the best AI coding CLI, but Anthropic API costs add up fast. DeepSeek offers an Anthropic-compatible endpoint at ~1/10 the price. This project bridges the two so you keep the full Claude Code experience with DeepSeek economics.
+| | Approach A: codex-relay | Approach B: Claude Code CLI |
+|---|---|---|
+| Method | Local proxy (127.0.0.1:4000) | Environment variables |
+| Setup | Start relay  then Codex | Run .bat directly |
+| Best for | Codex Desktop native UX | Terminal coding + Git automation |
 
 ### Quick Start
 
-```bat
-git clone https://github.com/YOUR_USERNAME/deep-claude-codex.git
+\\\at
+git clone https://github.com/jeremylpf/deep-claude-codex.git
 cd deep-claude-codex
 setup.bat
-deepclaude.bat
-```
+\\\
 
-### Two Usage Modes
-
-1. **Standalone**: Double-click `deepclaude.bat` → interactive Claude Code session
-2. **Via Codex**: Your Codex AI assistant calls `claude -p "task"` on demand, maintaining long-term project context across sessions
+See [docs/codex-relay-bridge.md](docs/codex-relay-bridge.md) for the relay approach.
 
 ### Network
 
-- `api.deepseek.com` is accessible directly from China — **no VPN needed**
-- `setup.bat` auto-switches to npmmirror if npm registry is unreachable
+- api.deepseek.com: direct access from China, no VPN needed
+- npm: setup.bat auto-switches to npmmirror if unreachable
 
 ### Prerequisites
 
 - Windows 10/11
 - Node.js >= 18
 - DeepSeek API key ([get one](https://platform.deepseek.com/api_keys))
-- Git (optional)
-- GitHub Desktop (optional)
+- Python (for Approach A: pip install codex-relay)
 
 ### License
 
-MIT — see [LICENSE](./LICENSE)
-
-
+MIT  see [LICENSE](./LICENSE)

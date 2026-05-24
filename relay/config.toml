@@ -1,0 +1,9 @@
+﻿# Codex Desktop configuration for DeepSeek via codex-relay
+# Copy to: %USERPROFILE%\.codex\config.toml
+
+model_provider = "deepseek"
+model = "deepseek-v4-pro"
+base_url = "http://127.0.0.1:4000/v1"
+wire_api = "responses"
+requires_openai_auth = false
+stream_idle_timeout_ms = 600000
