@@ -1,0 +1,15 @@
+﻿# Environment files with secrets (DO NOT commit)
+.env
+.env.local
+*.env
+
+# Node.js
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+Desktop.ini
