@@ -9,21 +9,22 @@
 <a name="chinese"></a>
 ## 中文
 
-### 两套方案
+### 三条路径
 
-本项目提供两种方式在 Windows 上使用 DeepSeek 驱动 AI 编程：
+本项目提供三种方式在 Windows 上使用 DeepSeek 驱动 AI 编程：
 
 `
 方案 A: Codex Desktop  codex-relay  DeepSeek (推荐日常使用)
-方案 B: Codex 终端  Claude Code CLI  DeepSeek (编程/自动化)
+方案 B: Codex 终端  Claude Code CLI  DeepSeek (终端编程)
+方案 C: Codex 终端  设置 ANTHROPIC_BASE_URL  直接调 DeepSeek API (零中间层)
 `
 
-| | 方案 A: codex-relay | 方案 B: Claude Code CLI |
-|---|---|---|
-| 桥接方式 | 本地代理 (127.0.0.1:4000) | 环境变量 |
-| 启动要求 | 先启 relay  再开 Codex | 直接运行 bat |
-| 适用场景 | Codex Desktop 原生体验 | 终端编程 + Git 自动化 |
-| 协议转换 | relay 自动转换 DeepSeek  OpenAI | Anthropic 兼容接口直连 |
+| | 方案 A: codex-relay | 方案 B: Claude Code CLI | 方案 C: 直接调 DeepSeek API |
+|---|---|---|---|
+| 桥接方式 | 本地代理 (127.0.0.1:4000) | 环境变量 | 环境变量 (无 relay) |
+| 启动要求 | 先启 relay → 再开 Codex | 直接运行 bat | Codex 设 env vars 后调 claude -p |
+| 适用场景 | Codex Desktop 原生体验 | 交互式终端编程 | 自动化编程 + Git 管理 |
+| 协议转换 | relay 自动转换 | Anthropic 兼容接口 | Anthropic 兼容接口（直连）
 
 ---
 
@@ -143,12 +144,58 @@ Codex 审查 git diff  git commit
 
 ### 这个项目解决什么
 
-中国 Windows 开发者的两个痛点：
+中国 Windows 开发者的三个痛点和解决方案：
 
-1. **Codex Desktop 默认走 OpenAI API** — 贵且国内不便。用 codex-relay 桥接到 DeepSeek，成本降 90%。
-2. **Claude Code 很强但 API 贵** — 把底座换成 DeepSeek，保留全部工具链。
+1. **Codex Desktop 默认走 OpenAI API** — 贵且不便。用 codex-relay 桥接到 DeepSeek，成本降 90%。** — 贵且国内不便。用 codex-relay 桥接到 DeepSeek，成本降 90%。
+2. **Claude Code 很强但 API 贵** — 把底座换成 DeepSeek，保留全部工具链。** — 把底座换成 DeepSeek，保留全部工具链。
 
-两个方案都在这个仓库里，选一个就行。
+3. **Codex 终端直接调用 DeepSeek API** — 设置 ANTHROPIC_BASE_URL 环境变量指向 pi.deepseek.com/anthropic，Claude Code 的 API 请求直连 DeepSeek，无需 relay 中间层。
+
+三条路径都在这个仓库里，按需选用。
+
+### 核心原理：Codex 直接调用 DeepSeek API
+
+这是本项目的第三个也是最直接的目的 —— Codex 不经过 relay，直接走 DeepSeek 的 Anthropic 兼容接口：
+
+```
+Codex 终端 (本界面)
+  │
+  │  PowerShell 设置环境变量：
+  │  $env:ANTHROPIC_BASE_URL = "https://api.deepseek.com/anthropic"
+  │  $env:ANTHROPIC_AUTH_TOKEN = "sk-xxx"
+  │
+  ▼
+claude.cmd -p "你的编程任务"
+  │
+  │  Claude Code 把环境变量里的 URL 作为 API 后端
+  │  所有 /v1/messages 请求发往 api.deepseek.com
+  │
+  ▼
+DeepSeek API (Anthropic 兼容端点)
+  │  返回标准 Anthropic 格式响应
+  │  (模型实际是 deepseek-v4-pro / v4-flash)
+  ▼
+Claude Code 解析响应 → 执行工具调用（读文件/写代码/Shell）
+  │
+  ▼
+Codex 审查结果 → git commit → 维护长期上下文
+```
+
+**关键点**：`ANTHROPIC_BASE_URL` 是 Claude Code 内置的切换机制。把它指向 DeepSeek 后，Claude Code 的所有 API 调用都直接发到 DeepSeek，不需要 relay 中间层。
+
+实测验证（就在本仓库开发过程中）：
+
+```powershell
+# Codex 终端执行
+$env:ANTHROPIC_BASE_URL = "https://api.deepseek.com/anthropic"
+$env:ANTHROPIC_AUTH_TOKEN = "sk-xxx"
+$env:ANTHROPIC_DEFAULT_SONNET_MODEL = "deepseek-v4-pro"
+claude -p "给 main.py 加 DELETE /tasks/{task_id} 接口"
+
+# 结果：9.5 秒返回，成功添加接口并通过 git diff 审查
+```
+
+---
 
 ---
 
@@ -207,7 +254,7 @@ A: 它把 Codex Desktop 发的 OpenAI 格式请求转成 DeepSeek 格式，再�
 <a name="english"></a>
 ## English
 
-### Two Approaches
+### Three Approaches
 
 | | Approach A: codex-relay | Approach B: Claude Code CLI |
 |---|---|---|
@@ -240,4 +287,8 @@ See [docs/codex-relay-bridge.md](docs/codex-relay-bridge.md) for the relay appro
 ### License
 
 MIT  see [LICENSE](./LICENSE)
+
+
+
+
 
