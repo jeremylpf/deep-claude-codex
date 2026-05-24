@@ -58,9 +58,68 @@ deepclaude.bat
 
 > **获取 DeepSeek API key**：[platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys)
 
-### 两种使用方式
 
-#### 方式一：独立窗口（推荐新手）
+### 💻 Windows 11 + Codex 调用 DeepSeek 完整方法
+
+> 以下是在 Codex 终端里直接调用 DeepSeek 底座 Claude Code 的实操步骤。
+
+#### 前置准备
+
+1. 运行 `setup.bat` 完成一键安装
+2. 将 `.env.example` 复制为 `.env`，填入你的 DeepSeek API key：
+   ```
+   DEEPSEEK_API_KEY=sk-你的key
+   ```
+
+#### 方法一：通过 claude-run.bat（推荐）
+
+Codex 终端中执行：
+
+```powershell
+# 单次调用，Codex 自动拼好上下文
+& "C:\Users\你的用户名\...\deep-claude-codex\claude-run.bat" "给 main.py 加搜索接口"
+```
+
+#### 方法二：直接设环境变量调用
+
+```powershell
+$env:ANTHROPIC_BASE_URL = "https://api.deepseek.com/anthropic"
+$env:ANTHROPIC_AUTH_TOKEN = "sk-你的key"
+$env:ANTHROPIC_DEFAULT_SONNET_MODEL = "deepseek-v4-pro"
+$env:ANTHROPIC_DEFAULT_HAIKU_MODEL = "deepseek-v4-flash"
+
+claude -p "你的编程任务"
+```
+
+#### 完整工作流演示
+
+```
+你在 Codex 里说：「给 demo-app 加个用户注册接口」
+           │
+           ▼
+Codex 读项目上下文 → 拼好 prompt
+           │
+           ▼
+Codex 执行：claude-run.bat "在 main.py 中添加 POST /register 接口..."
+           │
+           ▼
+Claude Code (DeepSeek V4) → 读代码 → 写代码 → 返回结果
+           │
+           ▼
+Codex 审查 git diff → git commit
+           │
+           ▼
+下次你继续说，Codex 还记得全部历史
+```
+
+#### 网络说明
+
+| 服务 | 需要 VPN？ | 说明 |
+|------|:---:|------|
+| `api.deepseek.com` | ❌ | 国产服务，国内直连 |
+| npm 装 Claude Code | ❌ | setup.bat 自动切淘宝镜像 |
+| `github.com` | ⚠️ | 视网络情况，可能需要 |
+### 方式一：独立窗口（推荐新手）
 
 双击 `deepclaude.bat`，弹出 CMD 窗口，直接和 Claude Code 对话编程。
 
@@ -220,4 +279,5 @@ deepclaude.bat
 ### License
 
 MIT — see [LICENSE](./LICENSE)
+
 
