@@ -141,25 +141,54 @@ Codex 审查 git diff  git commit
 
 ---
 
-### 项目结构
+### 这个项目解决什么
 
-\\\
+中国 Windows 开发者的两个痛点：
+
+1. **Codex Desktop 默认走 OpenAI API** — 贵且国内不便。用 codex-relay 桥接到 DeepSeek，成本降 90%。
+2. **Claude Code 很强但 API 贵** — 把底座换成 DeepSeek，保留全部工具链。
+
+两个方案都在这个仓库里，选一个就行。
+
+---
+
+### 文件结构和用途
+
+```
 deep-claude-codex/
-  setup.bat             一键安装脚本
-  deepclaude.bat        交互式启动 (方案B)
-  claude-run.bat        非交互脚本 (方案B, Codex调用)
-  .env.example          API key 配置模板
-  relay/
-    config.toml         Codex Desktop 配置 (方案A)
-    auth.json           认证配置 (方案A)
-    start-relay.bat     启动 relay (方案A)
-  docs/
-    codex-relay-bridge.md  方案A 详细文档
-  README.md
-  .gitignore
-  LICENSE (MIT)
-\\\
-
+│
+├── setup.bat               一键安装脚本：检测环境 → 切国内镜像 → 
+│                           装 Claude Code → 让用户填 key → 生成 deepclaude.bat
+│
+├── deepclaude.bat          交互式启动（方案 B）：双击打开 CMD，
+│                           进入 Claude Code 交互会话，底座 DeepSeek V4
+│
+├── claude-run.bat          非交互调用（方案 B，Codex 专用）：从 .env 读 key，
+│                           执行 claude -p "任务" 后退出，供 AI 助手调度
+│
+├── .env.example            API key 模板：复制为 .env 填入 DeepSeek key，
+│                           不会被 git 提交
+│
+├── relay/
+│   ├── config.toml         Codex Desktop 模型配置：告诉 Codex 走
+│   │                       127.0.0.1:4000，模型设为 deepseek-v4-pro
+│   │                       复制到 %USERPROFILE%\.codex\config.toml
+│   │
+│   ├── auth.json           Codex Desktop 认证配置：登录模式 apikey
+│   │                       复制到 %USERPROFILE%\.codex\auth.json
+│   │
+│   └── start-relay.bat     启动 codex-relay（方案 A）：设置上游
+│                           api.deepseek.com，监听 4000 端口
+│                           必须先启动，再开 Codex Desktop
+│
+├── docs/
+│   └── codex-relay-bridge.md  方案 A 详细文档：架构图、协议转换、
+│                              配置详解、启动顺序、开机自启
+│
+├── README.md               本文件，项目总览
+├── .gitignore              忽略 .env 等敏感文件，防止泄露 key
+└── LICENSE                 MIT 开源协议
+```
 ---
 
 ### FAQ
@@ -211,3 +240,4 @@ See [docs/codex-relay-bridge.md](docs/codex-relay-bridge.md) for the relay appro
 ### License
 
 MIT  see [LICENSE](./LICENSE)
+
