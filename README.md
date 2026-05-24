@@ -66,6 +66,32 @@ deepclaude.bat
 
 #### 方式二：通过 Codex 调用（推荐进阶）
 
+1. 将 `.env.example` 复制为 `.env`，填入你的 DeepSeek API key
+2. 在 Codex 终端里，AI 助手直接帮你调 Claude Code：
+
+```
+你说：「给 main.py 加个搜索接口」
+      ↓
+Codex 自动调用：claude-run.bat "给 main.py 加搜索接口"
+      ↓
+Claude Code 读代码 → 写代码 → 返回结果
+      ↓
+Codex 审查 diff → git commit
+      ↓
+下次继续，Codex 维护全部上下文
+```
+
+`claude-run.bat` 是非交互模式脚本，专为 Codex/AI 助手调用设计：
+- 从 `.env` 读取 API key（安全，不会被提交到 git）
+- 调用 `claude -p` 单次执行并返回
+- 适合 Codex 作为长期记忆 + 调度中心
+
+#### 方式一：独立窗口（推荐新手）
+
+双击 `deepclaude.bat`，弹出 CMD 窗口，直接和 Claude Code 对话编程。
+
+#### 方式二：通过 Codex 调用（推荐进阶）
+
 在 Codex 终端里，AI 助手直接帮你调 Claude Code：
 
 ```
@@ -120,6 +146,17 @@ A: Codex 是 OpenAI 的桌面 AI 编程助手，可以在终端里持续管理�
 A: 不需要自启。需要编程时双击打开，Codex 方案则是随时在 Codex 界面里调用。
 
 ### 项目结构
+
+```
+deep-claude-codex/
+├── setup.bat          # 一键安装脚本
+├── deepclaude.bat     # 交互式启动脚本 (由 setup.bat 生成, 含你的 key)
+├── claude-run.bat     # 非交互脚本 (供 Codex 调用, 从 .env 读取 key)
+├── .env.example       # API key 配置模板
+├── README.md          # 本文件
+├── .gitignore         # 忽略 .env 等敏感文件
+└── LICENSE            # MIT
+```
 
 ```
 deep-claude-codex/
@@ -183,3 +220,4 @@ deepclaude.bat
 ### License
 
 MIT — see [LICENSE](./LICENSE)
+
